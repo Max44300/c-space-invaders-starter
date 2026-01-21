@@ -1,4 +1,5 @@
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 #include "game.h"
 #include <stdio.h>
 
@@ -57,7 +58,7 @@ void handle_input(bool *running, const Uint8 *keys, Entity *player, Entity *bull
     }
 }
 
-void update(Entity *player, Entity *bullet, bool *bullet_active, float dt)
+void update(Entity *player, Entity *bullet, bool *bullet_active, float dt, Army *army)
 {
     player->x += player->vx * dt;
 
@@ -71,10 +72,50 @@ void update(Entity *player, Entity *bullet, bool *bullet_active, float dt)
         bullet->y += bullet->vy * dt;
         if (bullet->y + bullet->h < 0)
             *bullet_active = false;
+        
+        for (int i=0; i<army->nb; i++){
+            if (army->ennemies[i].alive == true && bullet->y >= army->ennemies[i].y-ENNEMY_HEIGHT && bullet->y <= army->ennemies[i].y && (bullet->x>=army->ennemies[i].x-BULLET_WIDTH) && bullet->x<=army->ennemies[i].x+ENNEMY_WIDTH){
+                army->ennemies[i].alive = false;
+                *bullet_active = false;
+            } 
+        }
+    }
+    for (int i=0; i<army->nb; i++)
+    {
+        army->ennemies[i].y += ENNEMY_SPEED * dt;
+    }
+
+}
+
+void new_ennemy( Army *army)
+{
+    for (int i=0; i<10; i++){
+        Entity ennemy = {
+        .x = 20+80*i,
+        .y = 60 ,
+        .w = ENNEMY_WIDTH,
+        .h = ENNEMY_HEIGHT,
+        .vx = 0,
+        .vy = 0,
+        .alive = true};
+        army->ennemies[i]=ennemy;
+    }
+    for (int i=10; i<army->nb; i++){
+        Entity ennemy = {
+        .x = 20+80*(i-10),
+        .y = 100 ,
+        .w = ENNEMY_WIDTH,
+        .h = ENNEMY_HEIGHT,
+        .vx = 0,
+        .vy = 0,
+        .alive = true};
+        army->ennemies[i]=ennemy;
     }
 }
 
-void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, bool bullet_active)
+
+
+void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, bool bullet_active, Army *army)
 {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
@@ -84,6 +125,20 @@ void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, bool bullet_
         player->w, player->h};
     SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
     SDL_RenderFillRect(renderer, &player_rect);
+    
+    
+    SDL_Rect tab[army->nb];
+    for (int i=0; i<army->nb; i++){
+        if (army->ennemies[i].alive == true){
+            tab[i].x = (int)army->ennemies[i].x, 
+            tab[i].y = (int)army->ennemies[i].y,
+            tab[i].w = army->ennemies[i].w, 
+            tab[i].h = army->ennemies[i].h;
+            SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+            SDL_RenderFillRect(renderer, &tab[i]); 
+        };
+        
+    }
 
     if (bullet_active)
     {
@@ -95,6 +150,17 @@ void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, bool bullet_
     }
 
     SDL_RenderPresent(renderer);
+}
+
+void victory (Army *army, bool running)
+{
+    running = false;
+    for (int i = 0; i<army->nb; i++)
+    {
+        if (army->ennemies[i].alive){
+            running = true;
+        }
+    }
 }
 
 void cleanup(SDL_Window *window, SDL_Renderer *renderer)
