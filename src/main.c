@@ -1,24 +1,12 @@
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_image.h>
 #include <stdbool.h>
 #include "entity.h"
 #include "game.h"
 
 int main(void)
 {
-    //initialisation de la librairie SDL_ttf
-    if (TTF_Init() < 0)
-    {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "[DEBUG] > %s", TTF_GetError());
-        return EXIT_FAILURE;
-    }
-    TTF_Font* font = TTF_OpenFont("ARIALI.TTF", 18); // Crée un police avec la police "ariali.ttf" et de taille 18 pixels
-    if (font == NULL)
-    {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "[DEBUG] > %s", TTF_GetError());
-
-    }
-    //
+   
     
     
     SDL_Window *window = NULL;
@@ -29,25 +17,28 @@ int main(void)
         return 1;
     }
 
-    bool running = true;
+    Endgame endgame = {true, false};
     Uint32 last_ticks = SDL_GetTicks();
 
     Entity player = {
         .x = SCREEN_WIDTH / 2 - PLAYER_WIDTH / 2,
-        .y = SCREEN_HEIGHT - 60,
+        .y = SCREEN_HEIGHT - 100,
         .w = PLAYER_WIDTH,
         .h = PLAYER_HEIGHT,
         .vx = 0,
         .vy = 0,
-        .alive = true };
+        .alive = true,
+        .bullet_activ = false,
+        .pv = 3 };
 
     Entity bullet = {0};
-    bool bullet_active = false;
+    bool endscreen = true;
     Army army;
     army.nb = 20;
+    army.direction = true;
     new_ennemy(&army);
 
-    while (running)
+    while (endgame.running)
     {
         Uint32 ticks = SDL_GetTicks();
         float dt = (ticks - last_ticks) / 1000.0f;
@@ -57,16 +48,52 @@ int main(void)
 
         SDL_PumpEvents();
         const Uint8 *keys = SDL_GetKeyboardState(NULL);
-        handle_input(&running, keys, &player, &bullet, &bullet_active);
-        update(&player, &bullet, &bullet_active, dt, &army);
-        render(renderer, &player, &bullet, bullet_active, &army);
-        victory(&army, running);
+        handle_input(&endgame.running, keys, &player, &bullet);
+        update(&player, &bullet, dt, &army);
+        render(renderer, &player, &bullet, &army);
+        end(&player, &army, &endgame);
 
     }
-    SDL_Surface* text = TTF_RenderText_Blended(font, "Victoire", SDL_Color{ 0, 255, 0, 255 });
+
+    while (endscreen){
+        SDL_Surface* image;
+        if (endgame.victory){
+            image = IMG_Load("victoire.png");
+            if(!image)
+            {
+                printf("Erreur de chargement de l'image : %s \n",SDL_GetError());
+                return -1;
+            }
+
+        }
+        else{
+            image = IMG_Load("defaite.png");
+            if(!image)
+            {
+                printf("Erreur de chargement de l'image : %s \n",SDL_GetError());
+                return -1;
+            }
+        }
+        SDL_RenderClear(renderer);
+        SDL_Texture* monimage = SDL_CreateTextureFromSurface(renderer,image);
+        SDL_RenderCopy(renderer, monimage, NULL, NULL);
+        SDL_RenderPresent(renderer);
+        const Uint8 *keys = SDL_GetKeyboardState(NULL);
+        SDL_Event event;
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_QUIT)
+                endscreen = false;
+        }
+        if (keys[SDL_SCANCODE_SPACE]){
+            endscreen = false;
+        }
+        SDL_FreeSurface(image);
+    }
 
     cleanup(window, renderer);
-    void SDLCALL TTF_CloseFont(TTF_Font *font);
-    TTF_Quit();
+    SDL_Quit;
+    
+    
     return 0;
 }

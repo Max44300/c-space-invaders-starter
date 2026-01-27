@@ -1,0 +1,71 @@
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+#include <stdbool.h>
+#include "entity.h"
+#include "game.h"
+
+int main(void)
+{
+   
+    
+    
+    SDL_Window *window = NULL;
+    SDL_Renderer *renderer = NULL;
+
+    if (!init(&window, &renderer))
+    {
+        return 1;
+    }
+
+    Endgame endgame = {true, true};
+    Uint32 last_ticks = SDL_GetTicks();
+
+    Entity player = {
+        .x = SCREEN_WIDTH / 2 - PLAYER_WIDTH / 2,
+        .y = SCREEN_HEIGHT - 100,
+        .w = PLAYER_WIDTH,
+        .h = PLAYER_HEIGHT,
+        .vx = 0,
+        .vy = 0,
+        .alive = true };
+
+    Entity bullet = {0};
+    bool bullet_active = false;
+    bool endscreen = true;
+    Army army;
+    army.nb = 20;
+    army.direction = true;
+    new_ennemy(&army);
+
+    while (endgame.running)
+    {
+        Uint32 ticks = SDL_GetTicks();
+        float dt = (ticks - last_ticks) / 1000.0f;
+        if (dt > 0.05f)
+            dt = 0.05f;
+        last_ticks = ticks;
+
+        SDL_PumpEvents();
+        const Uint8 *keys = SDL_GetKeyboardState(NULL);
+        handle_input(&endgame.running, keys, &player, &bullet, &bullet_active);
+        update(&player, &bullet, &bullet_active, dt, &army);
+        render(renderer, &player, &bullet, bullet_active, &army);
+        end(&army, &endgame);
+
+    }
+
+    while (endscreen){
+        SDL_Surface* image = IMG_Load("image.png");
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderClear(renderer);
+        SDL_RenderPresent(renderer);
+        const Uint8 *keys = SDL_GetKeyboardState(NULL);
+        if (keys[SDL_SCANCODE_KP_ENTER]){
+            endscreen = false;
+        }
+    }
+
+    cleanup(window, renderer);
+    
+    return 0;
+}

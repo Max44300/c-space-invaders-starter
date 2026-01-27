@@ -32,7 +32,7 @@ bool init(SDL_Window **window, SDL_Renderer **renderer)
     return true;
 }
 
-void handle_input(bool *running, const Uint8 *keys, Entity *player, Entity *bullet, bool *bullet_active)
+void handle_input(bool *running, const Uint8 *keys, Entity *player, Entity *bullet)
 {
     SDL_Event event;
     while (SDL_PollEvent(&event))
@@ -47,9 +47,9 @@ void handle_input(bool *running, const Uint8 *keys, Entity *player, Entity *bull
     if (keys[SDL_SCANCODE_RIGHT])
         player->vx = PLAYER_SPEED;
 
-    if (keys[SDL_SCANCODE_SPACE] && !*bullet_active)
+    if (keys[SDL_SCANCODE_SPACE] && !player->bullet_activ)
     {
-        *bullet_active = true;
+        player->bullet_activ = true;
         bullet->x = player->x + player->w / 2 - BULLET_WIDTH / 2;
         bullet->y = player->y;
         bullet->w = BULLET_WIDTH;
@@ -58,7 +58,7 @@ void handle_input(bool *running, const Uint8 *keys, Entity *player, Entity *bull
     }
 }
 
-void update(Entity *player, Entity *bullet, bool *bullet_active, float dt, Army *army)
+void update(Entity *player, Entity *bullet, float dt, Army *army)
 {
     player->x += player->vx * dt;
 
@@ -67,23 +67,58 @@ void update(Entity *player, Entity *bullet, bool *bullet_active, float dt, Army 
     if (player->x + player->w > SCREEN_WIDTH)
         player->x = SCREEN_WIDTH - player->w;
 
-    if (*bullet_active)
+    if (player->bullet_activ)
     {
         bullet->y += bullet->vy * dt;
         if (bullet->y + bullet->h < 0)
-            *bullet_active = false;
+            player->bullet_activ = false;
         
         for (int i=0; i<army->nb; i++){
             if (army->ennemies[i].alive == true && bullet->y >= army->ennemies[i].y-ENNEMY_HEIGHT && bullet->y <= army->ennemies[i].y && (bullet->x>=army->ennemies[i].x-BULLET_WIDTH) && bullet->x<=army->ennemies[i].x+ENNEMY_WIDTH){
                 army->ennemies[i].alive = false;
-                *bullet_active = false;
+                player->bullet_activ = false;
             } 
         }
     }
     for (int i=0; i<army->nb; i++)
     {
-        army->ennemies[i].y += ENNEMY_SPEED * dt;
+        if (army->direction){
+            army->ennemies[i].x += ENNEMY_SPEED * dt;
+        }
+        else{
+            army->ennemies[i].x += -ENNEMY_SPEED * dt;
+        }
+        if (army->ennemies[army->nb -1].x > SCREEN_WIDTH -40){
+            army->direction = false;
+            army->ennemies[i].y += ENNEMY_HEIGHT;
+        }
+        if (army->ennemies[0].x < 0){
+            army->direction = true;
+            army->ennemies[i].y += ENNEMY_HEIGHT;
+        }
+        if (rand()<100000 && !army->ennemies[i].bullet_activ && army->ennemies[i].alive){
+            army->ennemies[i].bullet_activ = true;
+            army->bullets[i].x = army->ennemies[i].x + army->ennemies[i].w / 2 - BULLET_WIDTH / 4;
+            army->bullets[i].y = army->ennemies[i].y;
+            army->bullets[i].w = BULLET_WIDTH/2;
+            army->bullets[i].h = BULLET_HEIGHT/2;
+            army->bullets[i].vy = BULLET_SPEED;
+        }
+        
+        if (army->ennemies[i].bullet_activ)
+        {
+            army->bullets[i].y += army->bullets[i].vy * dt;
+            if (army->bullets[i].y + bullet->h > SCREEN_HEIGHT)
+                army->ennemies[i].bullet_activ = false;
+            if (army->bullets[i].y >= player->y-PLAYER_HEIGHT && army->bullets[i].y <= player->y && (army->bullets[i].x>=player->x-BULLET_WIDTH/2) && army->bullets[i].x<=player->x+PLAYER_WIDTH)
+            {
+                army->ennemies[i].bullet_activ=false;
+                player->pv += -1;
+            }
+        }
+
     }
+
 
 }
 
@@ -91,7 +126,7 @@ void new_ennemy( Army *army)
 {
     for (int i=0; i<10; i++){
         Entity ennemy = {
-        .x = 20+80*i,
+        .x = 20+60*i,
         .y = 60 ,
         .w = ENNEMY_WIDTH,
         .h = ENNEMY_HEIGHT,
@@ -102,7 +137,7 @@ void new_ennemy( Army *army)
     }
     for (int i=10; i<army->nb; i++){
         Entity ennemy = {
-        .x = 20+80*(i-10),
+        .x = 20+60*(i-10),
         .y = 100 ,
         .w = ENNEMY_WIDTH,
         .h = ENNEMY_HEIGHT,
@@ -115,7 +150,7 @@ void new_ennemy( Army *army)
 
 
 
-void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, bool bullet_active, Army *army)
+void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, Army *army)
 {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
@@ -140,7 +175,8 @@ void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, bool bullet_
         
     }
 
-    if (bullet_active)
+
+    if (player->bullet_activ)
     {
         SDL_Rect bullet_rect = {
             (int)bullet->x, (int)bullet->y,
@@ -149,17 +185,48 @@ void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, bool bullet_
         SDL_RenderFillRect(renderer, &bullet_rect);
     }
 
+    SDL_Rect tab_bullets[army->nb];
+    for (int i=0; i<army->nb; i++){
+        if (army->ennemies[i].bullet_activ){
+            tab_bullets[i].x = (int)army->bullets[i].x, 
+            tab_bullets[i].y = (int)army->bullets[i].y,
+            tab_bullets[i].w = army->bullets[i].w, 
+            tab_bullets[i].h = army->bullets[i].h;
+        SDL_SetRenderDrawColor(renderer, 255, 165, 0, 255);
+        SDL_RenderFillRect(renderer, &tab_bullets[i]);
+
+        }
+    }
+    SDL_Surface* image;
+    image = IMG_Load("3coeurs.png");
+    if(!image)
+    {
+        printf("Erreur de chargement de l'image : %s \n",SDL_GetError());
+        return -1;
+    }
+    SDL_Texture* monimage = SDL_CreateTextureFromSurface(renderer,image,200,100);
+
     SDL_RenderPresent(renderer);
 }
 
-void victory (Army *army, bool running)
+void end (Entity *player, Army *army, Endgame *endgame)
 {
-    running = false;
+    endgame->running = false;
+    endgame->victory = true;
     for (int i = 0; i<army->nb; i++)
     {
         if (army->ennemies[i].alive){
-            running = true;
+            endgame->running = true;
         }
+    }
+    if (army->ennemies[0].y >= SCREEN_HEIGHT-100){
+        endgame->running = false;
+        endgame->victory = false;
+    }
+    if (player->pv <= 0){
+        endgame->victory = false;
+        endgame->running = false;
+
     }
 }
 

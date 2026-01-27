@@ -2,7 +2,7 @@
 #define GAME_H
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_image.h>
 #include <stdbool.h>
 #include "entity.h"
 
@@ -19,14 +19,14 @@
 
 #define ENNEMY_WIDTH 40
 #define ENNEMY_HEIGHT 20
-#define ENNEMY_SPEED 15
+#define ENNEMY_SPEED 100
 
 bool init(SDL_Window **window, SDL_Renderer **renderer);
-void handle_input(bool *running, const Uint8 *keys, Entity *player, Entity *bullet, bool *bullet_active);
-void update(Entity *player, Entity *bullet, bool *bullet_active, float dt, Army *army);
+void handle_input(bool *running, const Uint8 *keys, Entity *player, Entity *bullet);
+void update(Entity *player, Entity *bullet, float dt, Army *army);
 void new_ennemy(Army *army);
-void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, bool bullet_active, Army *army);
-void victory(Army *army, bool running);
+void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, Army *army);
+void end(Entity *player, Army *army, Endgame *endgame);
 void cleanup(SDL_Window *window, SDL_Renderer *renderer);
 
 #endif
