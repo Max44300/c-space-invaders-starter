@@ -19,13 +19,13 @@
 
 #define ENNEMY_WIDTH 40
 #define ENNEMY_HEIGHT 20
-#define ENNEMY_SPEED 100
+#define ENNEMY_SPEED_INIT 200
 
 bool init(SDL_Window **window, SDL_Renderer **renderer);
 void handle_input(bool *running, const Uint8 *keys, Entity *player, Entity *bullet);
-void update(Entity *player, Entity *bullet, float dt, Army *army);
+void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart);
 void new_ennemy(Army *army);
-void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, Army *army);
+void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, Army *army, Entity *heart);
 void end(Entity *player, Army *army, Endgame *endgame);
 void cleanup(SDL_Window *window, SDL_Renderer *renderer);
 

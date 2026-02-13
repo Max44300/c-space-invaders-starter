@@ -58,10 +58,20 @@ void handle_input(bool *running, const Uint8 *keys, Entity *player, Entity *bull
     }
 }
 
-void update(Entity *player, Entity *bullet, float dt, Army *army)
+void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart)
 {
     player->x += player->vx * dt;
 
+    if (army->ennemies[0].y >= 200 && army->ennemies[0].y<400){
+        for (int i = 0; i< army->nb; i++){
+            army->ennemies[i].vx = ENNEMY_SPEED_INIT * 1.3;
+        }
+    }
+    if (army->ennemies[0].y >= 400){
+        for (int i = 0; i< army->nb; i++){
+            army->ennemies[i].vx = ENNEMY_SPEED_INIT * 1.3*1.3;
+        }
+    }
     if (player->x < 0)
         player->x = 0;
     if (player->x + player->w > SCREEN_WIDTH)
@@ -83,10 +93,10 @@ void update(Entity *player, Entity *bullet, float dt, Army *army)
     for (int i=0; i<army->nb; i++)
     {
         if (army->direction){
-            army->ennemies[i].x += ENNEMY_SPEED * dt;
+            army->ennemies[i].x += army->ennemies[i].vx * dt;
         }
         else{
-            army->ennemies[i].x += -ENNEMY_SPEED * dt;
+            army->ennemies[i].x += -army->ennemies[i].vx * dt;
         }
         if (army->ennemies[army->nb -1].x > SCREEN_WIDTH -40){
             army->direction = false;
@@ -96,7 +106,7 @@ void update(Entity *player, Entity *bullet, float dt, Army *army)
             army->direction = true;
             army->ennemies[i].y += ENNEMY_HEIGHT;
         }
-        if (rand()<100000 && !army->ennemies[i].bullet_activ && army->ennemies[i].alive){
+        if (rand()<400000 && !army->ennemies[i].bullet_activ && army->ennemies[i].alive){
             army->ennemies[i].bullet_activ = true;
             army->bullets[i].x = army->ennemies[i].x + army->ennemies[i].w / 2 - BULLET_WIDTH / 4;
             army->bullets[i].y = army->ennemies[i].y;
@@ -119,6 +129,24 @@ void update(Entity *player, Entity *bullet, float dt, Army *army)
 
     }
 
+    if (!heart->alive && rand()<500000 ){
+        heart->alive = true;
+        heart->x = 50 + rand () % (SCREEN_WIDTH-100);
+        heart->y = 50 + rand () % (SCREEN_HEIGHT-400);
+    }
+    if (heart->alive){
+        heart->y += heart->vy * dt;
+        if ( heart->y >= player->y-PLAYER_HEIGHT && heart->y <= player->y && (heart->x >= player->x - PLAYER_WIDTH) && heart->x<=player->x + PLAYER_WIDTH){
+            if (player->pv <3){
+                player->pv += 1;
+            }
+            heart->alive = false;
+        }
+        if (heart->y > SCREEN_HEIGHT){
+            heart->alive = false;
+        }
+    }
+
 
 }
 
@@ -130,7 +158,7 @@ void new_ennemy( Army *army)
         .y = 60 ,
         .w = ENNEMY_WIDTH,
         .h = ENNEMY_HEIGHT,
-        .vx = 0,
+        .vx = ENNEMY_SPEED_INIT,
         .vy = 0,
         .alive = true};
         army->ennemies[i]=ennemy;
@@ -141,7 +169,7 @@ void new_ennemy( Army *army)
         .y = 100 ,
         .w = ENNEMY_WIDTH,
         .h = ENNEMY_HEIGHT,
-        .vx = 0,
+        .vx = ENNEMY_SPEED_INIT,
         .vy = 0,
         .alive = true};
         army->ennemies[i]=ennemy;
@@ -150,7 +178,7 @@ void new_ennemy( Army *army)
 
 
 
-void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, Army *army)
+void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, Army *army, Entity *heart)
 {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
@@ -197,15 +225,60 @@ void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, Army *army)
 
         }
     }
+    SDL_Rect vie;
+    vie.y =0;
     SDL_Surface* image;
-    image = IMG_Load("3coeurs.png");
-    if(!image)
-    {
-        printf("Erreur de chargement de l'image : %s \n",SDL_GetError());
-        return -1;
+    if (player->pv <= 1){
+        image = IMG_Load("1coeur.png");
+        vie.w = 50;
+        vie.x = 750;
+        vie.h = 50;
+            if(!image)
+            {
+                printf("Erreur de chargement de l'image : %s \n",SDL_GetError());
+                return -1;
+            }
+        SDL_Texture* monimage = SDL_CreateTextureFromSurface(renderer,image);
+        SDL_RenderCopy(renderer, monimage, NULL, &vie);
     }
-    SDL_Texture* monimage = SDL_CreateTextureFromSurface(renderer,image,200,100);
-
+    if (player->pv == 2){
+        image = IMG_Load("2coeurs.png");
+        vie.w = 101;
+        vie.x = 699;
+        vie.h = 50;
+            if(!image)
+            {
+                printf("Erreur de chargement de l'image : %s \n",SDL_GetError());
+                return -1;
+            }
+        SDL_Texture* monimage = SDL_CreateTextureFromSurface(renderer,image);
+        SDL_RenderCopy(renderer, monimage, NULL, &vie);
+    }
+    if (player->pv == 3){
+        image = IMG_Load("3coeurs.png");
+        vie.w = 152;
+        vie.x = 648;
+        vie.h = 50;
+            if(!image)
+            {
+                printf("Erreur de chargement de l'image : %s \n",SDL_GetError());
+                return -1;
+            }
+        SDL_Texture* monimage = SDL_CreateTextureFromSurface(renderer,image);
+        SDL_RenderCopy(renderer, monimage, NULL, &vie);
+    }
+    SDL_Rect coeur;
+    SDL_Surface* image2;
+    if (heart->alive){
+        image2 = IMG_Load("1coeur.png");
+        coeur.w = 50;
+        coeur.x = heart->x;
+        coeur.y = heart->y;
+        coeur.h = 50;
+        SDL_Texture* monimage2 = SDL_CreateTextureFromSurface(renderer,image2);
+        SDL_RenderCopy(renderer, monimage2, NULL, &coeur);
+    }
+    
     SDL_RenderPresent(renderer);
 }
 

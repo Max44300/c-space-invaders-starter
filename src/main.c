@@ -32,6 +32,10 @@ int main(void)
         .pv = 3 };
 
     Entity bullet = {0};
+    Entity heart = {
+        .vy = 300,
+        .alive = false,
+    };
     bool endscreen = true;
     Army army;
     army.nb = 20;
@@ -49,8 +53,8 @@ int main(void)
         SDL_PumpEvents();
         const Uint8 *keys = SDL_GetKeyboardState(NULL);
         handle_input(&endgame.running, keys, &player, &bullet);
-        update(&player, &bullet, dt, &army);
-        render(renderer, &player, &bullet, &army);
+        update(&player, &bullet, dt, &army, &heart);
+        render(renderer, &player, &bullet, &army, &heart);
         end(&player, &army, &endgame);
 
     }
