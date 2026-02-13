@@ -58,7 +58,7 @@ void handle_input(bool *running, const Uint8 *keys, Entity *player, Entity *bull
     }
 }
 
-void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart)
+void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart, int niveau)
 {
     player->x += player->vx * dt;
 
@@ -129,7 +129,7 @@ void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart)
 
     }
 
-    if (!heart->alive && rand()<500000 ){
+    if (!heart->alive && rand()<200000*niveau ){
         heart->alive = true;
         heart->x = 50 + rand () % (SCREEN_WIDTH-100);
         heart->y = 50 + rand () % (SCREEN_HEIGHT-400);

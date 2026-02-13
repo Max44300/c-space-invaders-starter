@@ -41,6 +41,8 @@ int main(void)
     army.nb = 20;
     army.direction = true;
     new_ennemy(&army);
+    printf ("Sélectionner un niveau pour la régénération de la vie (1 -> difficile, 2 -> moyen ou 3 -> facile)");
+    int niveau = scanf ("%d", &niveau);
 
     while (endgame.running)
     {
@@ -53,7 +55,7 @@ int main(void)
         SDL_PumpEvents();
         const Uint8 *keys = SDL_GetKeyboardState(NULL);
         handle_input(&endgame.running, keys, &player, &bullet);
-        update(&player, &bullet, dt, &army, &heart);
+        update(&player, &bullet, dt, &army, &heart, niveau);
         render(renderer, &player, &bullet, &army, &heart);
         end(&player, &army, &endgame);
 
