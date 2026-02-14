@@ -41,8 +41,43 @@ int main(void)
     army.nb = 20;
     army.direction = true;
     new_ennemy(&army);
-    printf ("Sélectionner un niveau pour la régénération de la vie (1 -> difficile, 2 -> moyen ou 3 -> facile)");
-    int niveau = scanf ("%d", &niveau);
+    bool selection = true;
+    int niveau = 3;
+
+    SDL_Surface* select;
+    select = IMG_Load("Selection_difficulte.png");
+
+    while (selection){
+        SDL_RenderClear(renderer);
+        SDL_Texture* maselect = SDL_CreateTextureFromSurface(renderer,select);
+        SDL_RenderCopy(renderer, maselect, NULL, NULL);
+        SDL_RenderPresent(renderer);
+        const Uint8 *keys = SDL_GetKeyboardState(NULL);
+        SDL_Event event;
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_QUIT)
+                selection = false;
+        }
+        if (keys[SDL_SCANCODE_KP_1]){
+            niveau = 1;
+            selection = false;
+        }
+        if (keys[SDL_SCANCODE_KP_2]){
+            niveau = 2;
+            selection = false;
+        }
+        if (keys[SDL_SCANCODE_KP_3]){
+            niveau = 3;
+            selection = false;
+        }
+
+        SDL_DestroyTexture(maselect);
+
+    }
+    SDL_FreeSurface(select);
+    
+    
 
     while (endgame.running)
     {
@@ -59,10 +94,20 @@ int main(void)
         render(renderer, &player, &bullet, &army, &heart);
         end(&player, &army, &endgame);
 
+        SDL_Event event;     //pour sortir de la partie si on ne veut pas la finir
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_QUIT)
+                selection = false;
+        }
+        if (keys[SDL_SCANCODE_ESCAPE]){
+            endgame.running = false;
+            endscreen = false;
+        }
+
     }
 
-    while (endscreen){
-        SDL_Surface* image;
+    SDL_Surface* image;
         if (endgame.victory){
             image = IMG_Load("victoire.png");
             if(!image)
@@ -80,6 +125,9 @@ int main(void)
                 return -1;
             }
         }
+
+    
+    while (endscreen){
         SDL_RenderClear(renderer);
         SDL_Texture* monimage = SDL_CreateTextureFromSurface(renderer,image);
         SDL_RenderCopy(renderer, monimage, NULL, NULL);
@@ -94,8 +142,9 @@ int main(void)
         if (keys[SDL_SCANCODE_SPACE]){
             endscreen = false;
         }
-        SDL_FreeSurface(image);
+        SDL_DestroyTexture(monimage);
     }
+    SDL_FreeSurface(image);
 
     cleanup(window, renderer);
     SDL_Quit;

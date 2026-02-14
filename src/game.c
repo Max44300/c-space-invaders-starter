@@ -129,7 +129,7 @@ void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart,
 
     }
 
-    if (!heart->alive && rand()<200000*niveau ){
+    if (!heart->alive && rand()<400000*niveau ){
         heart->alive = true;
         heart->x = 50 + rand () % (SCREEN_WIDTH-100);
         heart->y = 50 + rand () % (SCREEN_HEIGHT-400);
