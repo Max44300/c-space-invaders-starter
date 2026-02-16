@@ -3,6 +3,33 @@
 #include "game.h"
 #include <stdio.h>
 
+void new_ennemy( Army *army, int vitesse)
+{
+    for (int i=0; i<10; i++){
+        Entity ennemy = {
+        .x = 20+60*i,
+        .y = 60 ,
+        .w = ENNEMY_WIDTH,
+        .h = ENNEMY_HEIGHT,
+        .vx = ENNEMY_SPEED_INIT * vitesse,
+        .vy = 0,
+        .alive = true};
+        army->ennemies[i]=ennemy;
+    }
+    for (int i=10; i<army->nb; i++){
+        Entity ennemy = {
+        .x = 20+60*(i-10),
+        .y = 100 ,
+        .w = ENNEMY_WIDTH,
+        .h = ENNEMY_HEIGHT,
+        .vx = ENNEMY_SPEED_INIT * vitesse,
+        .vy = 0,
+        .alive = true};
+        army->ennemies[i]=ennemy;
+    }
+}
+
+
 bool init(SDL_Window **window, SDL_Renderer **renderer)
 {
     if (SDL_Init(SDL_INIT_VIDEO) != 0)
@@ -58,18 +85,18 @@ void handle_input(bool *running, const Uint8 *keys, Entity *player, Entity *bull
     }
 }
 
-void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart, int niveau)
+void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart, int niveau, int vitesse)
 {
     player->x += player->vx * dt;
 
     if (army->ennemies[0].y >= 200 && army->ennemies[0].y<400){
         for (int i = 0; i< army->nb; i++){
-            army->ennemies[i].vx = ENNEMY_SPEED_INIT * 1.3;
+            army->ennemies[i].vx = ENNEMY_SPEED_INIT *vitesse * 1.3;
         }
     }
     if (army->ennemies[0].y >= 400){
         for (int i = 0; i< army->nb; i++){
-            army->ennemies[i].vx = ENNEMY_SPEED_INIT * 1.3*1.3;
+            army->ennemies[i].vx = ENNEMY_SPEED_INIT *vitesse * 1.3*1.3;
         }
     }
     if (player->x < 0)
@@ -150,31 +177,7 @@ void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart,
 
 }
 
-void new_ennemy( Army *army)
-{
-    for (int i=0; i<10; i++){
-        Entity ennemy = {
-        .x = 20+60*i,
-        .y = 60 ,
-        .w = ENNEMY_WIDTH,
-        .h = ENNEMY_HEIGHT,
-        .vx = ENNEMY_SPEED_INIT,
-        .vy = 0,
-        .alive = true};
-        army->ennemies[i]=ennemy;
-    }
-    for (int i=10; i<army->nb; i++){
-        Entity ennemy = {
-        .x = 20+60*(i-10),
-        .y = 100 ,
-        .w = ENNEMY_WIDTH,
-        .h = ENNEMY_HEIGHT,
-        .vx = ENNEMY_SPEED_INIT,
-        .vy = 0,
-        .alive = true};
-        army->ennemies[i]=ennemy;
-    }
-}
+
 
 
 
@@ -240,6 +243,7 @@ void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, Army *army, 
             }
         SDL_Texture* monimage = SDL_CreateTextureFromSurface(renderer,image);
         SDL_RenderCopy(renderer, monimage, NULL, &vie);
+        SDL_DestroyTexture(monimage);
     }
     if (player->pv == 2){
         image = IMG_Load("2coeurs.png");
@@ -253,6 +257,7 @@ void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, Army *army, 
             }
         SDL_Texture* monimage = SDL_CreateTextureFromSurface(renderer,image);
         SDL_RenderCopy(renderer, monimage, NULL, &vie);
+        SDL_DestroyTexture(monimage);
     }
     if (player->pv == 3){
         image = IMG_Load("3coeurs.png");
@@ -266,6 +271,7 @@ void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, Army *army, 
             }
         SDL_Texture* monimage = SDL_CreateTextureFromSurface(renderer,image);
         SDL_RenderCopy(renderer, monimage, NULL, &vie);
+        SDL_DestroyTexture(monimage);
     }
     SDL_Rect coeur;
     SDL_Surface* image2;
@@ -277,8 +283,8 @@ void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, Army *army, 
         coeur.h = 50;
         SDL_Texture* monimage2 = SDL_CreateTextureFromSurface(renderer,image2);
         SDL_RenderCopy(renderer, monimage2, NULL, &coeur);
+        SDL_DestroyTexture(monimage2);
     }
-    
     SDL_RenderPresent(renderer);
 }
 

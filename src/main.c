@@ -20,6 +20,88 @@ int main(void)
     Endgame endgame = {true, false};
     Uint32 last_ticks = SDL_GetTicks();
 
+    
+    bool selection_vie = true;
+    int niveau = 3;
+    bool selection_vitesse = true;
+    int vitesse = 1;
+
+    SDL_Surface* select;
+    select = IMG_Load("Selection_difficulte.png");
+    SDL_Texture* maselect = SDL_CreateTextureFromSurface(renderer,select);
+
+    while (selection_vie){
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, maselect, NULL, NULL);
+        SDL_RenderPresent(renderer);
+        const Uint8 *keys = SDL_GetKeyboardState(NULL);
+        SDL_Event event;
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_QUIT)
+                selection_vie = false;
+        }
+        if (keys[SDL_SCANCODE_KP_1]){
+            niveau = 1;
+            selection_vie = false;
+        }
+        if (keys[SDL_SCANCODE_KP_2]){
+            niveau = 2;
+            selection_vie = false;
+        }
+        if (keys[SDL_SCANCODE_KP_3]){
+            niveau = 3;
+            selection_vie = false;
+        }
+
+    }
+    SDL_DestroyTexture(maselect);
+    SDL_FreeSurface(select);
+
+    SDL_Delay(1000);
+    
+    SDL_Surface* select_vit;
+    select_vit = IMG_Load("Selection_vitesse.png");
+    if(!select_vit)
+            {
+                printf("Erreur de chargement de l'image : %s \n",SDL_GetError());
+                return -1;
+            }
+    SDL_Texture* maselect_vit = SDL_CreateTextureFromSurface(renderer,select_vit);
+
+    while (selection_vitesse){
+        SDL_RenderClear(renderer);
+
+        SDL_RenderCopy(renderer, maselect_vit, NULL, NULL);
+        SDL_RenderPresent(renderer);
+        const Uint8 *keys = SDL_GetKeyboardState(NULL);
+        SDL_Event event;
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_QUIT)
+                selection_vitesse = false;
+        }
+        if (keys[SDL_SCANCODE_KP_1]){
+            vitesse = 1;
+            selection_vitesse = false;
+        }
+        if (keys[SDL_SCANCODE_KP_2]){
+            vitesse = 2;
+            selection_vitesse = false;
+        }
+        if (keys[SDL_SCANCODE_KP_3]){
+            vitesse = 3;
+            selection_vitesse = false;
+        }
+
+
+
+    }
+    SDL_DestroyTexture(maselect_vit);
+    SDL_FreeSurface(select_vit);
+    
+   
+
     Entity player = {
         .x = SCREEN_WIDTH / 2 - PLAYER_WIDTH / 2,
         .y = SCREEN_HEIGHT - 100,
@@ -40,44 +122,7 @@ int main(void)
     Army army;
     army.nb = 20;
     army.direction = true;
-    new_ennemy(&army);
-    bool selection = true;
-    int niveau = 3;
-
-    SDL_Surface* select;
-    select = IMG_Load("Selection_difficulte.png");
-
-    while (selection){
-        SDL_RenderClear(renderer);
-        SDL_Texture* maselect = SDL_CreateTextureFromSurface(renderer,select);
-        SDL_RenderCopy(renderer, maselect, NULL, NULL);
-        SDL_RenderPresent(renderer);
-        const Uint8 *keys = SDL_GetKeyboardState(NULL);
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
-        {
-            if (event.type == SDL_QUIT)
-                selection = false;
-        }
-        if (keys[SDL_SCANCODE_KP_1]){
-            niveau = 1;
-            selection = false;
-        }
-        if (keys[SDL_SCANCODE_KP_2]){
-            niveau = 2;
-            selection = false;
-        }
-        if (keys[SDL_SCANCODE_KP_3]){
-            niveau = 3;
-            selection = false;
-        }
-
-        SDL_DestroyTexture(maselect);
-
-    }
-    SDL_FreeSurface(select);
-    
-    
+    new_ennemy(&army, vitesse);
 
     while (endgame.running)
     {
@@ -90,7 +135,7 @@ int main(void)
         SDL_PumpEvents();
         const Uint8 *keys = SDL_GetKeyboardState(NULL);
         handle_input(&endgame.running, keys, &player, &bullet);
-        update(&player, &bullet, dt, &army, &heart, niveau);
+        update(&player, &bullet, dt, &army, &heart, niveau, vitesse);
         render(renderer, &player, &bullet, &army, &heart);
         end(&player, &army, &endgame);
 
@@ -98,7 +143,7 @@ int main(void)
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_QUIT)
-                selection = false;
+                endgame.running = false;
         }
         if (keys[SDL_SCANCODE_ESCAPE]){
             endgame.running = false;
