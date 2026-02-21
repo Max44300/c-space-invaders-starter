@@ -13,7 +13,17 @@ void new_ennemy( Army *army, int vitesse)
         .h = ENNEMY_HEIGHT,
         .vx = ENNEMY_SPEED_INIT * vitesse,
         .vy = 0,
-        .alive = true};
+        .alive = true,
+        .pv = 1,
+        .type = 0};
+        int a= rand() % (3);
+        if (a==1){
+            ennemy.type = 1;
+            ennemy.pv = 2;
+        }
+        if (a==2){
+            ennemy.type = 2;
+        }
         army->ennemies[i]=ennemy;
     }
     for (int i=10; i<army->nb; i++){
@@ -24,7 +34,17 @@ void new_ennemy( Army *army, int vitesse)
         .h = ENNEMY_HEIGHT,
         .vx = ENNEMY_SPEED_INIT * vitesse,
         .vy = 0,
-        .alive = true};
+        .alive = true,
+        .pv = 1,
+        .type = 0};
+        int a= rand() % (3);
+        if (a==1){
+            ennemy.type = 1;
+            ennemy.pv = 2;
+        }
+        if (a==2){
+            ennemy.type = 2;
+        }
         army->ennemies[i]=ennemy;
     }
 }
@@ -104,6 +124,7 @@ void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart,
     if (player->x + player->w > SCREEN_WIDTH)
         player->x = SCREEN_WIDTH - player->w;
 
+    // collision balle du joueur-ennemi
     if (player->bullet_activ)
     {
         bullet->y += bullet->vy * dt;
@@ -112,8 +133,11 @@ void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart,
         
         for (int i=0; i<army->nb; i++){
             if (army->ennemies[i].alive == true && bullet->y >= army->ennemies[i].y-ENNEMY_HEIGHT && bullet->y <= army->ennemies[i].y && (bullet->x>=army->ennemies[i].x-BULLET_WIDTH) && bullet->x<=army->ennemies[i].x+ENNEMY_WIDTH){
-                army->ennemies[i].alive = false;
+                army->ennemies[i].pv += -1;
                 player->bullet_activ = false;
+                if (army->ennemies[i].pv == 0 ){
+                    army->ennemies[i].alive = false;
+                }
             } 
         }
     }
@@ -133,13 +157,27 @@ void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart,
             army->direction = true;
             army->ennemies[i].y += ENNEMY_HEIGHT;
         }
-        if (rand()<400000 && !army->ennemies[i].bullet_activ && army->ennemies[i].alive){
-            army->ennemies[i].bullet_activ = true;
-            army->bullets[i].x = army->ennemies[i].x + army->ennemies[i].w / 2 - BULLET_WIDTH / 4;
-            army->bullets[i].y = army->ennemies[i].y;
-            army->bullets[i].w = BULLET_WIDTH/2;
-            army->bullets[i].h = BULLET_HEIGHT/2;
-            army->bullets[i].vy = BULLET_SPEED;
+        // on s'occupe des snipers
+        if (army->ennemies[i].type == 2){
+            if (rand()<600000 && !army->ennemies[i].bullet_activ && army->ennemies[i].alive){
+                army->ennemies[i].bullet_activ = true;
+                army->bullets[i].x = army->ennemies[i].x + army->ennemies[i].w / 2 - BULLET_WIDTH / 4;
+                army->bullets[i].y = army->ennemies[i].y;
+                army->bullets[i].w = BULLET_WIDTH/2;
+                army->bullets[i].h = BULLET_HEIGHT/2;
+                army->bullets[i].vy = BULLET_SPEED;
+            }
+        }
+        // puis des autres ennemis
+        if (army->ennemies[i].type == 0 || army->ennemies[i].type == 1 ){
+            if (rand()<200000 && !army->ennemies[i].bullet_activ && army->ennemies[i].alive){
+                army->ennemies[i].bullet_activ = true;
+                army->bullets[i].x = army->ennemies[i].x + army->ennemies[i].w / 2 - BULLET_WIDTH / 4;
+                army->bullets[i].y = army->ennemies[i].y;
+                army->bullets[i].w = BULLET_WIDTH/2;
+                army->bullets[i].h = BULLET_HEIGHT/2;
+                army->bullets[i].vy = BULLET_SPEED;
+            }
         }
         
         if (army->ennemies[i].bullet_activ)
@@ -155,7 +193,7 @@ void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart,
         }
 
     }
-
+    // la partie régénération de la vie et apparition des coeurs
     if (!heart->alive && rand()<400000*niveau ){
         heart->alive = true;
         heart->x = 50 + rand () % (SCREEN_WIDTH-100);
@@ -200,7 +238,21 @@ void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, Army *army, 
             tab[i].y = (int)army->ennemies[i].y,
             tab[i].w = army->ennemies[i].w, 
             tab[i].h = army->ennemies[i].h;
-            SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+            if (army->ennemies[i].type == Normal){
+                SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+            }
+            if (army->ennemies[i].type == Resistant){
+                if (army->ennemies[i].pv == 2){
+                    SDL_SetRenderDrawColor(renderer, 0, 102, 0, 255);
+                }
+                else {
+                    SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+                }
+            }
+            if (army->ennemies[i].type == Sniper){
+                SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+            }
+            
             SDL_RenderFillRect(renderer, &tab[i]); 
         };
         

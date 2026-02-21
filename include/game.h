@@ -19,7 +19,7 @@
 
 #define ENNEMY_WIDTH 40
 #define ENNEMY_HEIGHT 20
-#define ENNEMY_SPEED_INIT 30
+#define ENNEMY_SPEED_INIT 20
 
 void new_ennemy(Army *army, int vitesse);
 bool init(SDL_Window **window, SDL_Renderer **renderer);

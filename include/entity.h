@@ -1,6 +1,14 @@
 #ifndef ENTITY_H
 #define ENTITY_H
 
+typedef enum 
+{
+    Normal,
+    Resistant,
+    Sniper
+} Ennemytype;
+
+
 typedef struct
 {
     float x, y;
@@ -9,6 +17,7 @@ typedef struct
     bool alive;
     bool bullet_activ;
     int pv;
+    Ennemytype type;
 } Entity;
 
 typedef struct

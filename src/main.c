@@ -1,13 +1,15 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <stdbool.h>
+#include <time.h>
 #include "entity.h"
 #include "game.h"
+
 
 int main(void)
 {
    
-    
+    srand(time(NULL)); // pour avoir une génération aléatoire à chaque partie
     
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;
