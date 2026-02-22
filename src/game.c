@@ -5,47 +5,29 @@
 
 void new_ennemy( Army *army, int vitesse)
 {
-    for (int i=0; i<10; i++){
-        Entity ennemy = {
-        .x = 20+60*i,
-        .y = 60 ,
-        .w = ENNEMY_WIDTH,
-        .h = ENNEMY_HEIGHT,
-        .vx = ENNEMY_SPEED_INIT * vitesse,
-        .vy = 0,
-        .alive = true,
-        .pv = 1,
-        .type = Normal};
-        int a= rand() % (3);
-        if (a==1){
-            ennemy.type = Resistant;
-            ennemy.pv = 2;
+    int lim = army->nb/10;
+    for (int j=1; j<lim+1; j++){    
+        for (int i=10*(j-1); i<10*j; i++){
+            Entity ennemy = {
+            .x = 20+60*(i%10),
+            .y = 20 + 40*j ,
+            .w = ENNEMY_WIDTH,
+            .h = ENNEMY_HEIGHT,
+            .vx = ENNEMY_SPEED_INIT * vitesse,
+            .vy = 0,
+            .alive = true,
+            .pv = 1,
+            .type = Normal};
+            int a= rand() % (3);
+            if (a==1){
+                ennemy.type = Resistant;
+                ennemy.pv = 2;
+            }
+            if (a==2){
+                ennemy.type = Sniper;
+            }
+            army->ennemies[i]=ennemy;
         }
-        if (a==2){
-            ennemy.type = Sniper;
-        }
-        army->ennemies[i]=ennemy;
-    }
-    for (int i=10; i<army->nb; i++){
-        Entity ennemy = {
-        .x = 20+60*(i-10),
-        .y = 100 ,
-        .w = ENNEMY_WIDTH,
-        .h = ENNEMY_HEIGHT,
-        .vx = ENNEMY_SPEED_INIT * vitesse,
-        .vy = 0,
-        .alive = true,
-        .pv = 1,
-        .type = Normal};
-        int a= rand() % (3);
-        if (a==1){
-            ennemy.type = Resistant;
-            ennemy.pv = 2;
-        }
-        if (a==2){
-            ennemy.type = Sniper;
-        }
-        army->ennemies[i]=ennemy;
     }
 }
 
@@ -87,7 +69,7 @@ void handle_input(bool *running, const Uint8 *keys, Entity *player, Entity *bull
         if (event.type == SDL_QUIT)
             *running = false;
     }
-
+    //on regarde les touches pour déplacer le joueur
     player->vx = 0.0f;
     if (keys[SDL_SCANCODE_LEFT])
         player->vx = -PLAYER_SPEED;
@@ -107,8 +89,7 @@ void handle_input(bool *running, const Uint8 *keys, Entity *player, Entity *bull
 
 void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart, Entity *ammo, int niveau, int vitesse)
 {
-    player->x += player->vx * dt;
-
+    // pour la progressivité de la vitesse
     if (army->ennemies[0].y >= 200 && army->ennemies[0].y<400){
         for (int i = 0; i< army->nb; i++){
             army->ennemies[i].vx = ENNEMY_SPEED_INIT *vitesse * 1.3;
@@ -119,6 +100,8 @@ void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart,
             army->ennemies[i].vx = ENNEMY_SPEED_INIT *vitesse * 1.3*1.3;
         }
     }
+    // déplacement du joueur
+    player->x += player->vx * dt;
     if (player->x < 0)
         player->x = 0;
     if (player->x + player->w > SCREEN_WIDTH)
@@ -144,6 +127,7 @@ void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart,
             } 
         }
     }
+    // déplacement de l'armée d'ennemis
     for (int i=0; i<army->nb; i++)
     {
         if (army->direction){
