@@ -115,8 +115,14 @@ int main(void)
         .bullet_activ = false,
         .pv = 3 };
 
-    Entity bullet = {0};
+    Entity bullet = {
+        .pv = 1
+    };
     Entity heart = {
+        .vy = 300,
+        .alive = false,
+    };
+    Entity ammo = {
         .vy = 300,
         .alive = false,
     };
@@ -137,8 +143,8 @@ int main(void)
         SDL_PumpEvents();
         const Uint8 *keys = SDL_GetKeyboardState(NULL);
         handle_input(&endgame.running, keys, &player, &bullet);
-        update(&player, &bullet, dt, &army, &heart, niveau, vitesse);
-        render(renderer, &player, &bullet, &army, &heart);
+        update(&player, &bullet, dt, &army, &heart, &ammo, niveau, vitesse);
+        render(renderer, &player, &bullet, &army, &heart, &ammo);
         end(&player, &army, &endgame);
 
         SDL_Event event;     //pour sortir de la partie si on ne veut pas la finir

@@ -15,14 +15,14 @@ void new_ennemy( Army *army, int vitesse)
         .vy = 0,
         .alive = true,
         .pv = 1,
-        .type = 0};
+        .type = Normal};
         int a= rand() % (3);
         if (a==1){
-            ennemy.type = 1;
+            ennemy.type = Resistant;
             ennemy.pv = 2;
         }
         if (a==2){
-            ennemy.type = 2;
+            ennemy.type = Sniper;
         }
         army->ennemies[i]=ennemy;
     }
@@ -36,14 +36,14 @@ void new_ennemy( Army *army, int vitesse)
         .vy = 0,
         .alive = true,
         .pv = 1,
-        .type = 0};
+        .type = Normal};
         int a= rand() % (3);
         if (a==1){
-            ennemy.type = 1;
+            ennemy.type = Resistant;
             ennemy.pv = 2;
         }
         if (a==2){
-            ennemy.type = 2;
+            ennemy.type = Sniper;
         }
         army->ennemies[i]=ennemy;
     }
@@ -105,7 +105,7 @@ void handle_input(bool *running, const Uint8 *keys, Entity *player, Entity *bull
     }
 }
 
-void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart, int niveau, int vitesse)
+void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart, Entity *ammo, int niveau, int vitesse)
 {
     player->x += player->vx * dt;
 
@@ -133,9 +133,12 @@ void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart,
         
         for (int i=0; i<army->nb; i++){
             if (army->ennemies[i].alive == true && bullet->y >= army->ennemies[i].y-ENNEMY_HEIGHT && bullet->y <= army->ennemies[i].y && (bullet->x>=army->ennemies[i].x-BULLET_WIDTH) && bullet->x<=army->ennemies[i].x+ENNEMY_WIDTH){
-                army->ennemies[i].pv += -1;
+                army->ennemies[i].pv = army->ennemies[i].pv - bullet->pv;
+                if (bullet->pv == 2){
+                    bullet->pv = 1;
+                }
                 player->bullet_activ = false;
-                if (army->ennemies[i].pv == 0 ){
+                if (army->ennemies[i].pv <= 0 ){
                     army->ennemies[i].alive = false;
                 }
             } 
@@ -211,6 +214,22 @@ void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart,
             heart->alive = false;
         }
     }
+    //partie apparition d'un power-up : balle renforcée
+    if (!ammo->alive && rand()<600000 ){
+        ammo->alive = true;
+        ammo->x = 50 + rand () % (SCREEN_WIDTH-100);
+        ammo->y = 50 + rand () % (SCREEN_HEIGHT-400);
+    }
+    if (ammo->alive){
+        ammo->y += ammo->vy * dt;
+        if ( ammo->y >= player->y-PLAYER_HEIGHT && ammo->y <= player->y && (ammo->x >= player->x - PLAYER_WIDTH) && ammo->x<=player->x + PLAYER_WIDTH){
+            bullet->pv += 1;
+            ammo->alive = false;
+        }
+        if (ammo->y > SCREEN_HEIGHT){
+            ammo->alive = false;
+        }
+    }
 
 
 }
@@ -219,7 +238,7 @@ void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart,
 
 
 
-void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, Army *army, Entity *heart)
+void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, Army *army, Entity *heart, Entity *ammo)
 {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
@@ -336,6 +355,24 @@ void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, Army *army, 
         SDL_Texture* monimage2 = SDL_CreateTextureFromSurface(renderer,image2);
         SDL_RenderCopy(renderer, monimage2, NULL, &coeur);
         SDL_DestroyTexture(monimage2);
+    }
+    // affichage des ammos
+    SDL_Rect munition;
+    SDL_Surface* image3;
+    if (ammo->alive){
+        image3 = IMG_Load("balle.png");
+        if(!image3)
+            {
+                printf("Erreur de chargement de la munition : %s \n",SDL_GetError());
+                return -1;
+            }
+        munition.w = 50;
+        munition.x = ammo->x;
+        munition.y = ammo->y;
+        munition.h = 50;
+        SDL_Texture* monimage3 = SDL_CreateTextureFromSurface(renderer,image3);
+        SDL_RenderCopy(renderer, monimage3, NULL, &munition);
+        SDL_DestroyTexture(monimage3);
     }
     SDL_RenderPresent(renderer);
 }
