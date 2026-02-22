@@ -3,9 +3,10 @@
 
 typedef enum 
 {
-    Normal,
-    Resistant,
-    Sniper
+    Normal,         //types pour les ennemis
+    Resistant,      //types pour les ennemis
+    Sniper,         //types pour les ennemis
+    Invicible       //type pour le joueur, après avoir récupéré un totem
 } Ennemytype;
 
 
@@ -18,6 +19,7 @@ typedef struct
     bool bullet_activ;
     int pv;
     Ennemytype type;
+    Uint32 tick;
 } Entity;
 
 typedef struct

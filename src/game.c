@@ -87,7 +87,7 @@ void handle_input(bool *running, const Uint8 *keys, Entity *player, Entity *bull
     }
 }
 
-void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart, Entity *ammo, int niveau, int vitesse)
+void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart, Entity *ammo, Entity *totem, int niveau, int vitesse)
 {
     // pour la progressivité de la vitesse
     if (army->ennemies[0].y >= 200 && army->ennemies[0].y<400){
@@ -99,6 +99,10 @@ void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart,
         for (int i = 0; i< army->nb; i++){
             army->ennemies[i].vx = ENNEMY_SPEED_INIT *vitesse * 1.3*1.3;
         }
+    }
+    //on gère le temps d'activation du totem
+    if (SDL_GetTicks()-player->tick>2000){
+        player->type = Normal;
     }
     // déplacement du joueur
     player->x += player->vx * dt;
@@ -128,6 +132,20 @@ void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart,
         }
     }
     // déplacement de l'armée d'ennemis
+    // d'abord on regarde s'il y a un changement de direction à faire
+    if (army->ennemies[army->nb -1].x > SCREEN_WIDTH -40){
+            army->direction = false;
+            for (int i=0; i<army->nb; i++){
+                army->ennemies[i].y += ENNEMY_HEIGHT;
+            }
+        }
+    if (army->ennemies[0].x < 0){
+            army->direction = true;
+            for (int i=0; i<army->nb; i++){
+                army->ennemies[i].y += ENNEMY_HEIGHT;
+            }
+        }
+    //puis on bouge toute l'armée
     for (int i=0; i<army->nb; i++)
     {
         if (army->direction){
@@ -135,14 +153,6 @@ void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart,
         }
         else{
             army->ennemies[i].x += -army->ennemies[i].vx * dt;
-        }
-        if (army->ennemies[army->nb -1].x > SCREEN_WIDTH -40){
-            army->direction = false;
-            army->ennemies[i].y += ENNEMY_HEIGHT;
-        }
-        if (army->ennemies[0].x < 0){
-            army->direction = true;
-            army->ennemies[i].y += ENNEMY_HEIGHT;
         }
         // on s'occupe des snipers
         if (army->ennemies[i].type == 2){
@@ -175,7 +185,10 @@ void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart,
             if (army->bullets[i].y >= player->y-PLAYER_HEIGHT && army->bullets[i].y <= player->y && (army->bullets[i].x>=player->x-BULLET_WIDTH/2) && army->bullets[i].x<=player->x+PLAYER_WIDTH)
             {
                 army->ennemies[i].bullet_activ=false;
-                player->pv += -1;
+                if (!(player->type == Invicible)){
+                    player->pv += -1;
+                }
+                
             }
         }
 
@@ -214,6 +227,23 @@ void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart,
             ammo->alive = false;
         }
     }
+    //partie apparition d'un power-up : totem d'immortalité
+    if (!totem->alive && rand()<400000 ){
+        totem->alive = true;
+        totem->x = 50 + rand () % (SCREEN_WIDTH-100);
+        totem->y = 50 + rand () % (SCREEN_HEIGHT-400);
+    }
+    if (totem->alive){
+        totem->y += totem->vy * dt;
+        if ( totem->y >= player->y-PLAYER_HEIGHT && totem->y <= player->y && (totem->x >= player->x - PLAYER_WIDTH) && totem->x<=player->x + PLAYER_WIDTH){
+            player->type = Invicible;
+            player->tick = SDL_GetTicks();
+            totem->alive = false;
+        }
+        if (totem->y > SCREEN_HEIGHT){
+            totem->alive = false;
+        }
+    }
 
 
 }
@@ -222,16 +252,24 @@ void update(Entity *player, Entity *bullet, float dt, Army *army, Entity *heart,
 
 
 
-void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, Army *army, Entity *heart, Entity *ammo)
+void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, Army *army, Entity *heart, Entity *ammo, Entity *totem)
 {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
 
+    if (player->type == Invicible){
+        SDL_Rect Shield = {
+        (int)player->x-5, (int)player->y-5,
+        player->w+10, player->h+10};
+    SDL_SetRenderDrawColor(renderer, 255, 204, 255, 20);
+    SDL_RenderFillRect(renderer, &Shield);
+    }
     SDL_Rect player_rect = {
         (int)player->x, (int)player->y,
         player->w, player->h};
-    SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+    SDL_SetRenderDrawColor(renderer, 204, 0, 204, 255);
     SDL_RenderFillRect(renderer, &player_rect);
+    
     
     
     SDL_Rect tab[army->nb];
@@ -267,7 +305,12 @@ void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, Army *army, 
         SDL_Rect bullet_rect = {
             (int)bullet->x, (int)bullet->y,
             bullet->w, bullet->h};
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        if (bullet->pv == 2){
+            SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
+        }
+        else {
+            SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        }
         SDL_RenderFillRect(renderer, &bullet_rect);
     }
 
@@ -357,6 +400,24 @@ void render(SDL_Renderer *renderer, Entity *player, Entity *bullet, Army *army, 
         SDL_Texture* monimage3 = SDL_CreateTextureFromSurface(renderer,image3);
         SDL_RenderCopy(renderer, monimage3, NULL, &munition);
         SDL_DestroyTexture(monimage3);
+    }
+    // affichage des totems
+    SDL_Rect immort;
+    SDL_Surface* image4;
+    if (totem->alive){
+        image4 = IMG_Load("totem.png");
+        if(!image4)
+            {
+                printf("Erreur de chargement du totem : %s \n",SDL_GetError());
+                return -1;
+            }
+        immort.w = 50;
+        immort.x = totem->x;
+        immort.y = totem->y;
+        immort.h = 50;
+        SDL_Texture* monimage4 = SDL_CreateTextureFromSurface(renderer,image4);
+        SDL_RenderCopy(renderer, monimage4, NULL, &immort);
+        SDL_DestroyTexture(monimage4);
     }
     SDL_RenderPresent(renderer);
 }
