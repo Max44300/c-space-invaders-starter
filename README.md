@@ -214,3 +214,18 @@ est aussi importante que le gameplay.
 Bon développement 🚀
 
 
+---
+Pour compiler le code, il suffit de taper make
+Puis il faut executer le programme
+
+---
+
+Ce jeu de space-invader prend en charge :
+      - différent niveau de régénération de vie (probabilité d'apparition de coeur plus ou moins élevéé) avec un maximum de vie de trois coeurs
+      - différentes vitesses pour les ennemis
+      - des ennemis de trois classes différentes : normaux, résistants (deux balles sont nécessaires pour les tuer) et sniper (ils tirent plus souvent)
+      - des "power-up" : 
+              - un totem d'invicibilité qui accorde une invicibilité face aux tirs ennemis pendant 2 secondes
+              - des balles renforcées qui effectue un tir capable de tuer en un coup les ennemis résistants (valable pour le tir suivant l'obtention du power-up)
+
+Il est possible de quitter le jeu en pleine partie en appuyant sur la touche échap et de quitter le jeu après une victoire ou une défaite en appuyant sur la barre espace
